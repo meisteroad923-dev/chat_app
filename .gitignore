@@ -7,6 +7,12 @@ build/
 coverage/
 .next/
 .turbo/
+*.tsbuildinfo
+
+# Prisma가 스키마를 바탕으로 다시 생성하는 클라이언트·엔진 파일입니다.
+# 원본인 apps/server/prisma/schema.prisma와 migrations는 계속 Git으로 관리합니다.
+apps/server/src/generated/
+
 *.log
 .DS_Store
 Thumbs.db

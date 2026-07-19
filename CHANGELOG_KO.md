@@ -2,6 +2,27 @@
 
 모든 시각은 Asia/Tokyo(UTC+09:00)를 기준으로 기록한다. 최신 변경을 위에 추가한다.
 
+## 2026-07-19 19:43:51 +09:00
+
+### 수정한 파일
+
+- Git 제외 설정: `.gitignore`
+- 변경 이력: `CHANGELOG_KO.md`
+
+### 수정 내용
+
+- TypeScript 증분 빌드 캐시인 `*.tsbuildinfo`를 Git 추적 대상에서 제외했다.
+- Prisma가 자동 생성하는 `apps/server/src/generated/` 전체를 Git 추적 대상에서 제외했다.
+- Prisma 원본 스키마와 마이그레이션은 기존대로 Git에서 관리한다.
+
+### 수정 이유
+
+빌드와 Prisma 생성 명령으로 복구 가능한 환경별 파일이 `git status`에 반복 표시되거나 GitHub에 올라가는 일을 방지하기 위해서다.
+
+### 확인 방법
+
+- `git status --short`에서 TypeScript 빌드 캐시와 Prisma 생성 폴더가 표시되지 않는지 확인한다.
+
 ## 2026-07-19 19:24:05 +09:00
 
 ### 수정한 파일
