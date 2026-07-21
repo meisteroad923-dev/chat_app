@@ -13,10 +13,10 @@ config({ path: resolve(currentDirectory, "../../../.env") });
 const prisma = new PrismaClient();
 
 /** 운영 시드는 예시 비밀번호나 접속 키를 허용하지 않고 Render에 입력한 값만 사용합니다. */
-function seedSecret(name: string, fallback: string): string {
+function seedSecret(name: string, fallback: string, minimumLength = 12): string {
   const value = process.env[name]?.trim();
-  if (process.env.NODE_ENV === "production" && (!value || value === fallback || value.length < 12)) {
-    throw new Error(`${name}에 12자 이상의 운영용 임의 값을 설정해야 합니다.`);
+  if (process.env.NODE_ENV === "production" && (!value || value === fallback || value.length < minimumLength)) {
+    throw new Error(`${name}에 ${minimumLength}자 이상의 운영용 임의 값을 설정해야 합니다.`);
   }
   return value || fallback;
 }
@@ -43,10 +43,13 @@ async function seed(): Promise<void> {
   const secondAccessKey = seedSecret("SEED_SECOND_ROOM_ACCESS_KEY", "demo-room-access-1202");
   await prisma.roomAccessKey.upsert({ where: { keyHash: sha256(secondAccessKey) }, update: { status: "ACTIVE", encryptedKey: encryptSecret(secondAccessKey) }, create: { roomId: secondRoom.id, keyHash: sha256(secondAccessKey), encryptedKey: encryptSecret(secondAccessKey) } });
 
-  const adminPassword = await hash(seedSecret("SEED_ADMIN_PASSWORD", "Admin1234!"), 12);
-  const agentPassword = await hash(seedSecret("SEED_AGENT_PASSWORD", "Agent1234!"), 12);
-  await prisma.agent.upsert({ where: { loginId: "admin" }, update: {}, create: { name: "시스템 관리자", loginId: "admin", passwordHash: adminPassword, role: "ADMIN" } });
-  await prisma.agent.upsert({ where: { loginId: "agent01" }, update: {}, create: { name: "김상담", loginId: "agent01", passwordHash: agentPassword, role: "AGENT" } });
+  // 명시적으로 테스트 모드를 켠 배포에서만 짧은 공용 비밀번호와 기존 계정 재설정을 허용합니다.
+  const testPasswordMinimum = process.env.ALLOW_INSECURE_TEST_PASSWORDS === "true" ? 8 : 12;
+  const resetExistingPasswords = process.env.SEED_RESET_EXISTING_PASSWORDS === "true";
+  const adminPassword = await hash(seedSecret("SEED_ADMIN_PASSWORD", "Admin1234!", testPasswordMinimum), 12);
+  const agentPassword = await hash(seedSecret("SEED_AGENT_PASSWORD", "Agent1234!", testPasswordMinimum), 12);
+  await prisma.agent.upsert({ where: { loginId: "admin" }, update: resetExistingPasswords ? { passwordHash: adminPassword } : {}, create: { name: "시스템 관리자", loginId: "admin", passwordHash: adminPassword, role: "ADMIN" } });
+  await prisma.agent.upsert({ where: { loginId: "agent01" }, update: resetExistingPasswords ? { passwordHash: agentPassword } : {}, create: { name: "김상담", loginId: "agent01", passwordHash: agentPassword, role: "AGENT" } });
 }
 
 seed().finally(async () => prisma.$disconnect());

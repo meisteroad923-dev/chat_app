@@ -33,6 +33,10 @@ services:
         sync: false
       - key: SEED_AGENT_PASSWORD
         sync: false
+      - key: ALLOW_INSECURE_TEST_PASSWORDS
+        value: "false"
+      - key: SEED_RESET_EXISTING_PASSWORDS
+        value: "false"
       - key: SEED_ROOM_ACCESS_KEY
         sync: false
       - key: SEED_SECOND_ROOM_ACCESS_KEY
